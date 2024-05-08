@@ -18,7 +18,7 @@ const NotDetectedFramework Framework = "NotDetectedFramework"
 func Detect(dir string) (Framework, error) {
 	if _, err := os.Stat(filepath.Join(dir, "package.json")); err == nil {
 		// read in package.json
-		packageJSONContents, err := os.ReadFile("package.json")
+		packageJSONContents, err := os.ReadFile(filepath.Join(dir, "package.json"))
 		if err != nil {
 			fmt.Println(err)
 			return NotDetectedFramework, err
