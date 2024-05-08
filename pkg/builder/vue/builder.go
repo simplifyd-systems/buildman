@@ -1,0 +1,5 @@
+package vue
+
+func Build() {
+
+}
