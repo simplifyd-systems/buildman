@@ -25,7 +25,7 @@ type NextJSBuildConfig struct {
 	ArgsPlaceholder string
 }
 
-func Build(dir string) error {
+func Build(dir string) (string, error) {
 	var nextConfig []byte
 	// read the next.config.js or next.config.mjs file
 	if _, err := os.Stat(filepath.Join(dir, "next.config.js")); err == nil {
@@ -33,32 +33,30 @@ func Build(dir string) error {
 		if err != nil {
 			fmt.Println(err)
 			fmt.Println("cannot read next.config.js")
-			return fmt.Errorf("cannot read next.config.js")
+			return "", fmt.Errorf("cannot read next.config.js")
 		}
 	} else if _, err := os.Stat(filepath.Join(dir, "next.config.mjs")); err == nil {
 		nextConfig, err = os.ReadFile("next.config.mjs")
 		if err != nil {
 			fmt.Println(err)
 			fmt.Println("cannot read next.config.mjs")
-			return fmt.Errorf("cannot read next.config.mjs")
+			return "", fmt.Errorf("cannot read next.config.mjs")
 		}
 	} else {
 		fmt.Println("next.config not found")
-		return fmt.Errorf("next.config not found")
+		return "", fmt.Errorf("next.config not found")
 	}
 
 	config, err := processNextConfig(string(nextConfig))
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("cannot process next.config")
-		return fmt.Errorf("cannot process next.config")
+		return "", fmt.Errorf("cannot process next.config")
 	}
 
 	log.Println(config)
 
-	fmt.Println(generateDockerfile(config))
-
-	return nil
+	return generateDockerfile(config)
 }
 
 func processNextConfig(contents string) (NextJSBuildConfig, error) {

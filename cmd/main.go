@@ -18,5 +18,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	build.Build(".", framework)
+	dockerfile, err := build.Build(".", framework)
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+
+	fmt.Println()
+	fmt.Println()
+	fmt.Println()
+	fmt.Println(dockerfile)
+	fmt.Println()
+	fmt.Println()
+	fmt.Println()
 }
