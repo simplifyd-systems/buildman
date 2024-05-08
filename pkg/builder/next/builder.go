@@ -29,14 +29,14 @@ func Build(dir string) (string, error) {
 	var nextConfig []byte
 	// read the next.config.js or next.config.mjs file
 	if _, err := os.Stat(filepath.Join(dir, "next.config.js")); err == nil {
-		nextConfig, err = os.ReadFile("next.config.js")
+		nextConfig, err = os.ReadFile(filepath.Join(dir, "next.config.js"))
 		if err != nil {
 			fmt.Println(err)
 			fmt.Println("cannot read next.config.js")
 			return "", fmt.Errorf("cannot read next.config.js")
 		}
 	} else if _, err := os.Stat(filepath.Join(dir, "next.config.mjs")); err == nil {
-		nextConfig, err = os.ReadFile("next.config.mjs")
+		nextConfig, err = os.ReadFile(filepath.Join(dir, "next.config.mjs"))
 		if err != nil {
 			fmt.Println(err)
 			fmt.Println("cannot read next.config.mjs")
