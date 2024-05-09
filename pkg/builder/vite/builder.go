@@ -1,4 +1,4 @@
-package next
+package vite
 
 import (
 	"bufio"
@@ -14,11 +14,11 @@ import (
 )
 
 var (
-	//go:embed templates/Dockerfile_nextjs_static
-	nextJSBuildScript string
+	//go:embed templates/Dockerfile_vite
+	viteBuildScript string
 )
 
-type NextJSBuildConfig struct {
+type ViteBuildConfig struct {
 	Export          bool
 	OutputDir       string
 	NodeVersion     string
@@ -26,32 +26,25 @@ type NextJSBuildConfig struct {
 }
 
 func Build(dir string) (string, error) {
-	var nextConfig []byte
-	// read the next.config.js or next.config.mjs file
-	if _, err := os.Stat(filepath.Join(dir, "next.config.js")); err == nil {
-		nextConfig, err = os.ReadFile(filepath.Join(dir, "next.config.js"))
+	var viteConfig []byte
+	// read the vite.config.js or vite.config.mjs file
+	if _, err := os.Stat(filepath.Join(dir, "vite.config.js")); err == nil {
+		viteConfig, err = os.ReadFile(filepath.Join(dir, "vite.config.js"))
 		if err != nil {
 			fmt.Println(err)
-			fmt.Println("cannot read next.config.js")
-			return "", fmt.Errorf("cannot read next.config.js")
-		}
-	} else if _, err := os.Stat(filepath.Join(dir, "next.config.mjs")); err == nil {
-		nextConfig, err = os.ReadFile(filepath.Join(dir, "next.config.mjs"))
-		if err != nil {
-			fmt.Println(err)
-			fmt.Println("cannot read next.config.mjs")
-			return "", fmt.Errorf("cannot read next.config.mjs")
+			fmt.Println("cannot read vite.config.js")
+			return "", fmt.Errorf("cannot read vite.config.js")
 		}
 	} else {
-		fmt.Println("next.config not found")
-		return "", fmt.Errorf("next.config not found")
+		fmt.Println("vite.config not found")
+		return "", fmt.Errorf("vite.config not found")
 	}
 
-	config, err := processNextConfig(string(nextConfig))
+	config, err := processViteConfig(string(viteConfig))
 	if err != nil {
 		fmt.Println(err)
-		fmt.Println("cannot process next.config")
-		return "", fmt.Errorf("cannot process next.config")
+		fmt.Println("cannot process vite.config")
+		return "", fmt.Errorf("cannot process vite.config")
 	}
 
 	log.Println(config)
@@ -59,9 +52,9 @@ func Build(dir string) (string, error) {
 	return generateDockerfile(config)
 }
 
-func processNextConfig(contents string) (NextJSBuildConfig, error) {
-	export := true     // our default behaviour is to do a static export
-	outputDir := "out" // our default output directory
+func processViteConfig(contents string) (ViteBuildConfig, error) {
+	export := false
+	outputDir := ""
 
 	fmt.Println(contents)
 
@@ -74,7 +67,7 @@ func processNextConfig(contents string) (NextJSBuildConfig, error) {
 		line := scanner.Text()
 		fmt.Println(line)
 
-		if strings.Contains(line, "output") && strings.Contains(line, "export") {
+		if strings.Contains(line, "output") && strings.Contains(contents, "export") {
 			export = true
 			outputDir = "out"
 		} else if strings.Contains(line, "distDir") {
@@ -87,7 +80,7 @@ func processNextConfig(contents string) (NextJSBuildConfig, error) {
 		fmt.Printf("error occurred: %v\n", err)
 	}
 
-	return NextJSBuildConfig{
+	return ViteBuildConfig{
 		Export:      export,
 		OutputDir:   outputDir,
 		NodeVersion: "22",
@@ -109,12 +102,12 @@ func parseKeyValuePair(input string) (key, value string) {
 	return key, value
 }
 
-func generateDockerfile(config NextJSBuildConfig) (string, error) {
+func generateDockerfile(config ViteBuildConfig) (string, error) {
 	var b bytes.Buffer
 	f := bufio.NewWriter(&b)
 
 	// template Dockerfile
-	tpl, err := template.New("build_script").Parse(nextJSBuildScript)
+	tpl, err := template.New("build_script").Parse(viteBuildScript)
 	if err != nil {
 		fmt.Printf("generateDockerfile failure: %s\n", err)
 		return "", err
