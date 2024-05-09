@@ -15,11 +15,15 @@ import (
 
 var (
 	//go:embed templates/Dockerfile_nextjs_static
-	nextJSBuildScript string
+	nextJSStaticBuildScript string
+
+	//go:embed templates/Dockerfile_nextjs_non_static
+	nextJSNonStaticBuildScript string
 )
 
 type NextJSBuildConfig struct {
 	Export          bool
+	Standalone      bool
 	OutputDir       string
 	NodeVersion     string
 	ArgsPlaceholder string
@@ -60,8 +64,9 @@ func Build(dir string) (string, error) {
 }
 
 func processNextConfig(contents string) (NextJSBuildConfig, error) {
-	export := true     // our default behaviour is to do a static export
-	outputDir := "out" // our default output directory
+	export := false
+	standalone := false
+	outputDir := ""
 
 	fmt.Println(contents)
 
@@ -77,6 +82,8 @@ func processNextConfig(contents string) (NextJSBuildConfig, error) {
 		if strings.Contains(line, "output") && strings.Contains(line, "export") {
 			export = true
 			outputDir = "out"
+		} else if strings.Contains(line, "output") && strings.Contains(line, "standalone") {
+			standalone = true
 		} else if strings.Contains(line, "distDir") {
 			_, v := parseKeyValuePair(line)
 			outputDir = v
@@ -89,6 +96,7 @@ func processNextConfig(contents string) (NextJSBuildConfig, error) {
 
 	return NextJSBuildConfig{
 		Export:      export,
+		Standalone:  standalone,
 		OutputDir:   outputDir,
 		NodeVersion: "22",
 		ArgsPlaceholder: `
@@ -113,11 +121,22 @@ func generateDockerfile(config NextJSBuildConfig) (string, error) {
 	var b bytes.Buffer
 	f := bufio.NewWriter(&b)
 
+	var tpl *template.Template
+	var err error
+
 	// template Dockerfile
-	tpl, err := template.New("build_script").Parse(nextJSBuildScript)
-	if err != nil {
-		fmt.Printf("generateDockerfile failure: %s\n", err)
-		return "", err
+	if !config.Export && !config.Standalone {
+		tpl, err = template.New("build_script").Parse(nextJSNonStaticBuildScript)
+		if err != nil {
+			fmt.Printf("generateDockerfile failure: %s\n", err)
+			return "", err
+		}
+	} else {
+		tpl, err = template.New("build_script").Parse(nextJSStaticBuildScript)
+		if err != nil {
+			fmt.Printf("generateDockerfile failure: %s\n", err)
+			return "", err
+		}
 	}
 
 	err = tpl.Execute(f, config)
