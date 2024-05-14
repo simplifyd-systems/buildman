@@ -12,6 +12,7 @@ type Framework string
 const ReactFramework Framework = "React"
 const VueFramework Framework = "Vue"
 const NextFramework Framework = "Next"
+const GoFramework Framework = "Go"
 
 const NotDetectedFramework Framework = "NotDetectedFramework"
 
@@ -24,15 +25,14 @@ func Detect(dir string) (Framework, error) {
 			return NotDetectedFramework, err
 		}
 		if strings.Contains(string(packageJSONContents), "vue-cli-service") {
-			fmt.Println("VueJS application detected")
 			return VueFramework, nil
 		} else if strings.Contains(string(packageJSONContents), "\"next\"") {
-			fmt.Println("NextJS application detected")
 			return NextFramework, nil
 		} else if strings.Contains(string(packageJSONContents), "\"react\"") {
-			fmt.Println("ReactJS application detected")
 			return ReactFramework, nil
 		}
+	} else if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+		return GoFramework, nil
 	}
 
 	return NotDetectedFramework, nil
