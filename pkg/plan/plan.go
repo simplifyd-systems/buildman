@@ -13,6 +13,10 @@ func Plan(dir string, framework detect.Framework) (any, error) {
 		return golang.Plan(dir)
 	} else if framework == detect.NextFramework {
 		return next.Plan(dir)
+	} else if framework == detect.ReactFramework {
+		return next.Plan(dir)
+	} else if framework == detect.VueFramework {
+		return next.Plan(dir)
 	}
 
 	return "", fmt.Errorf("cannot build the %s framework", framework)

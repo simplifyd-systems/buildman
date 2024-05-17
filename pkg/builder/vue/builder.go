@@ -8,6 +8,8 @@ import (
 	"log"
 
 	_ "embed"
+
+	"github.com/simplifyd-systems/buildman/pkg/planner/vue"
 )
 
 var (
@@ -15,26 +17,11 @@ var (
 	vueJSBuildScript string
 )
 
-type VueJSBuildConfig struct {
-	Export          bool
-	OutputDir       string
-	NodeVersion     string
-	ArgsPlaceholder string
+func Build(dir string, plan vue.VuePlan) (string, error) {
+	return generateDockerfile(plan)
 }
 
-func Build(dir string) (string, error) {
-	return generateDockerfile(VueJSBuildConfig{
-		Export:      true,
-		OutputDir:   "build",
-		NodeVersion: "22",
-		ArgsPlaceholder: `
-{{range .Args}}
-ARG {{.}}
-{{end}}`,
-	})
-}
-
-func generateDockerfile(config VueJSBuildConfig) (string, error) {
+func generateDockerfile(plan vue.VuePlan) (string, error) {
 	var b bytes.Buffer
 	f := bufio.NewWriter(&b)
 
@@ -45,7 +32,7 @@ func generateDockerfile(config VueJSBuildConfig) (string, error) {
 		return "", err
 	}
 
-	err = tpl.Execute(f, config)
+	err = tpl.Execute(f, plan)
 	if err != nil {
 		log.Print("Template execute: ", err)
 		return "", err
